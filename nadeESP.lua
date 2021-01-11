@@ -3,7 +3,8 @@
 ---------------------
 local api = {
     client = {
-        set_event_callback = client.set_event_callback
+        set_event_callback = client.set_event_callback,
+        get_cvar = client.get_cvar
     },
     entity = {
         get_local_player = entity.get_local_player,
@@ -60,6 +61,9 @@ local var = {
         inferno = {
             time = 449
         }
+    },
+    cvar = {
+        mp_friendlyfire = 1
     }
 }
 ----------------------
@@ -99,21 +103,8 @@ local ui_additions = {
 ------FUNCTIONS------
 ---------------------
 -- nade esp
-local function draw_inferno()
-    local val = api.ui.get(ui_additions.nade_esp.ui_enabled);
-
-    if val[1] ~= "Molotov" and val[2] ~= "Molotov" then
-        return;
-    end
-
-    local hvh_mode_enabled = api.ui.get(ui_additions.nade_esp.settings.molotov.hvhmode);
-
-    local background_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.background_color));
-    local icon_color = nil;
-    local indicator_color = nil;
-
-    local icon_color2 = nil;
-    local indicator_color2 = nil;
+local function get_inferno_color(hvh_mode_enabled)
+    local icon_color, indicator_color, icon_color2, indicator_color2 = nil, nil, nil, nil; 
 
     if hvh_mode_enabled == true then
         icon_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_unsafe_color));
@@ -125,6 +116,20 @@ local function draw_inferno()
         icon_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.icon_color));
         indicator_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.indicator_color));
     end
+
+    return icon_color, indicator_color, icon_color2, indicator_color2;
+end
+
+local function draw_inferno()
+    local val = api.ui.get(ui_additions.nade_esp.ui_enabled);
+
+    if val[1] ~= "Molotov" and val[2] ~= "Molotov" then
+        return;
+    end
+
+    local hvh_mode_enabled = api.ui.get(ui_additions.nade_esp.settings.molotov.hvhmode);
+    local background_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.background_color));
+    local icon_color, indicator_color, icon_color2, indicator_color2 = get_inferno_color(hvh_mode_enabled);
 
     local molos = api.entity.get_all("CInferno");
     for i = 1, #molos do
@@ -146,16 +151,16 @@ local function draw_inferno()
             api.renderer.circle(posX, posY, background_color.r, background_color.g, background_color.b,
                 background_color.a, 20, 0, 1);
             local width, height = images.get_panorama_image("hud/deathnotice/icon-molotov.png"):measure(nil, 20);
-            if enemy == false and hvh_mode_enabled == true and owner ~= local_player then
+            if enemy == false and hvh_mode_enabled == true and owner ~= local_player and var.cvar.mp_friendlyfire == "0" then
                 api.renderer.circle_outline(posX, posY, indicator_color2.r, indicator_color2.g, indicator_color2.b,
                     indicator_color2.a, 18, 270, percentage, 2)
-                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2), posY - (height / 2),
-                    width, height, icon_color2.r, icon_color2.g, icon_color2.b, icon_color2.a)
+                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2),
+                    posY - (height / 2), width, height, icon_color2.r, icon_color2.g, icon_color2.b, icon_color2.a)
             else
                 api.renderer.circle_outline(posX, posY, indicator_color.r, indicator_color.g, indicator_color.b,
                     indicator_color.a, 18, 270, percentage, 2)
-                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2), posY - (height / 2),
-                    width, height, icon_color.r, icon_color.g, icon_color.b, icon_color.a)
+                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2),
+                    posY - (height / 2), width, height, icon_color.r, icon_color.g, icon_color.b, icon_color.a)
             end
         end
     end
@@ -221,10 +226,15 @@ local function paint()
     draw_inferno();
     draw_smoke();
 end
+
+local function round_start()
+    var.cvar.mp_friendlyfire = api.client.get_cvar("mp_friendlyfire");
+end
 --------------------
 -----INITIALIZE-----
 --------------------
 local function init_nade_esp()
+    var.cvar.mp_friendlyfire = api.client.get_cvar("mp_friendlyfire");
     nade_esp_setvisible();
     api.ui.set_callback(ui_additions.nade_esp.ui_settings, nade_esp_setvisible)
 end
@@ -232,5 +242,6 @@ end
 local function init()
     init_nade_esp();
     api.client.set_event_callback("paint", paint);
+    api.client.set_event_callback("round_start", round_start);
 end
 init();
