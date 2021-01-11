@@ -145,16 +145,16 @@ local function draw_inferno()
         if posX ~= nil and posY ~= nil then
             api.renderer.circle(posX, posY, background_color.r, background_color.g, background_color.b,
                 background_color.a, 20, 0, 1);
-            local width, height = images.get_panorama_image("icons/equipment/molotov.svg"):measure(nil, 20);
+            local width, height = images.get_panorama_image("hud/deathnotice/icon-molotov.png"):measure(nil, 20);
             if enemy == false and hvh_mode_enabled == true and owner ~= local_player then
                 api.renderer.circle_outline(posX, posY, indicator_color2.r, indicator_color2.g, indicator_color2.b,
                     indicator_color2.a, 18, 270, percentage, 2)
-                images.get_panorama_image("icons/equipment/molotov.svg"):draw(posX - (width / 2), posY - (height / 2),
+                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2), posY - (height / 2),
                     width, height, icon_color2.r, icon_color2.g, icon_color2.b, icon_color2.a)
             else
                 api.renderer.circle_outline(posX, posY, indicator_color.r, indicator_color.g, indicator_color.b,
                     indicator_color.a, 18, 270, percentage, 2)
-                images.get_panorama_image("icons/equipment/molotov.svg"):draw(posX - (width / 2), posY - (height / 2),
+                images.get_panorama_image("hud/deathnotice/icon-molotov.png"):draw(posX - (width / 2), posY - (height / 2),
                     width, height, icon_color.r, icon_color.g, icon_color.b, icon_color.a)
             end
         end
@@ -194,8 +194,8 @@ local function draw_smoke()
                 background_color.a, 20, 0, 1);
             api.renderer.circle_outline(posX, posY, indicator_color.r, indicator_color.g, indicator_color.b,
                 indicator_color.a, 18, 270, percentage, 2)
-            local width, height = images.get_panorama_image("icons/equipment/smokegrenade.svg"):measure(nil, 20);
-            images.get_panorama_image("icons/equipment/smokegrenade.svg"):draw(posX - (width / 2), posY - (height / 2),
+            local width, height = images.get_panorama_image("hud/deathnotice/icon-smokegrenade.png"):measure(nil, 20);
+            images.get_panorama_image("hud/deathnotice/icon-smokegrenade.png"):draw(posX - (width / 2), posY - (height / 2),
                 width, height, icon_color.r, icon_color.g, icon_color.b, icon_color.a)
         end
 
