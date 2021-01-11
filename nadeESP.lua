@@ -121,12 +121,6 @@ local function get_inferno_color(hvh_mode_enabled)
 end
 
 local function draw_inferno()
-    local val = api.ui.get(ui_additions.nade_esp.ui_enabled);
-
-    if val[1] ~= "Molotov" and val[2] ~= "Molotov" then
-        return;
-    end
-
     local hvh_mode_enabled = api.ui.get(ui_additions.nade_esp.settings.molotov.hvhmode);
     local background_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.background_color));
     local icon_color, indicator_color, icon_color2, indicator_color2 = get_inferno_color(hvh_mode_enabled);
@@ -167,11 +161,6 @@ local function draw_inferno()
 end
 
 local function draw_smoke()
-    local val = api.ui.get(ui_additions.nade_esp.ui_enabled);
-    if val[1] ~= "Smoke" and val[2] ~= "Smoke" then
-        return;
-    end
-
     local background_color = Color(api.ui.get(ui_additions.nade_esp.settings.smoke.background_color));
     local icon_color = Color(api.ui.get(ui_additions.nade_esp.settings.smoke.icon_color));
     local indicator_color = Color(api.ui.get(ui_additions.nade_esp.settings.smoke.indicator_color));
@@ -223,8 +212,15 @@ end
 -------EVENTS-------
 --------------------
 local function paint()
-    draw_inferno();
-    draw_smoke();
+     local selected = api.ui.get(ui_additions.nade_esp.ui_enabled)
+
+    if selected[1] == "Molotov" or selected[2] == "Molotov" then
+        draw_inferno()
+    end
+
+    if selected[1] == "Smoke" or selected[2] == "Smoke" then
+        draw_smoke()
+    end
 end
 
 local function round_start()
