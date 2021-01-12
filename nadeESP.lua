@@ -84,6 +84,8 @@ local ui_additions = {
         ui_settings = api.ui.new_combobox("VISUALS", "Other ESP", "Nade ESP settings", "General", "Smoke", "Molotov"),
         settings = {
             molotov = {
+                radius_color_label = api.ui.new_label("VISUALS", "Other ESP", "Radius color"),
+                radius_color = api.ui.new_color_picker("VISUALS", "Other ESP", "radius_color", 255, 0, 0, 255),
                 background_color_label = api.ui.new_label("VISUALS", "Other ESP", "Background"),
                 background_color = api.ui.new_color_picker("VISUALS", "Other ESP", "background_color", 0, 0, 0, 200),
                 icon_color_label = api.ui.new_label("VISUALS", "Other ESP", "Icon"),
@@ -97,12 +99,14 @@ local ui_additions = {
                 hvh_unsafe_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_icon_unsafe_color", 255, 0, 0, 255)
             },
             smoke = {
+                radius_color_label = api.ui.new_label("VISUALS", "Other ESP", "Radius color"),
+                radius_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_radius_color", 0, 0, 255, 255),
                 background_color_label = api.ui.new_label("VISUALS", "Other ESP", "Background"),
-                background_color = api.ui.new_color_picker("VISUALS", "Other ESP", "background_color", 0, 0, 0, 200),
+                background_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_background_color", 0, 0, 0, 200),
                 icon_color_label = api.ui.new_label("VISUALS", "Other ESP", "Icon"),
-                icon_color = api.ui.new_color_picker("VISUALS", "Other ESP", "icon_color", 255, 255, 255, 255),
+                icon_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_icon_color", 255, 255, 255, 255),
                 indicator_color_label = api.ui.new_label("VISUALS", "Other ESP", "Indicator"),
-                indicator_color = api.ui.new_color_picker("VISUALS", "Other ESP", "indicator_color", 255, 255, 255, 255)
+                indicator_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_indicator_color", 255, 255, 255, 255)
             },
             general = {
                 fade_out = api.ui.new_checkbox("VISUALS", "Other ESP", "Fade out"),
