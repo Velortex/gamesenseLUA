@@ -146,7 +146,7 @@ end
 local function draw_inferno()
     local hvh_mode_enabled = api.ui.get(ui_additions.nade_esp.settings.molotov.hvhmode)
     local background_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.background_color))
-    local color = get_inferno_color(hvh_mode_enabled)
+    local color = {}
     local icon_size = api.ui.get(ui_additions.nade_esp.settings.general.icon_size)
     local circle_radius = api.ui.get(ui_additions.nade_esp.settings.general.circle_radius)
     local outline_thickness = api.ui.get(ui_additions.nade_esp.settings.general.outline_thickness)
@@ -169,6 +169,7 @@ local function draw_inferno()
         local posX, posY = api.renderer.world_to_screen(x, y, z)
 
         if posX ~= nil and posY ~= nil then
+	    color = get_inferno_color(hvh_mode_enabled);
             local is_molly_safe = (enemy == false and hvh_mode_enabled == true and owner ~= local_player and var.cvar.mp_friendlyfire == "0")
 
             local _background_color = background_color
