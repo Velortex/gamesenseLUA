@@ -18,7 +18,9 @@ local api = {
     renderer = {
         world_to_screen = renderer.world_to_screen,
         circle_outline = renderer.circle_outline,
-        circle = renderer.circle
+        circle = renderer.circle,
+	triangle = renderer.triangle,
+	line = renderer.line
     },
     ui = {
         new_slider = ui.new_slider,
@@ -36,7 +38,12 @@ local api = {
     },
     string = {
         lower = string.lower
-    }
+    },
+   math = {
+       rad = math.rad,
+       sin = math.sin,
+       cos = math.cos
+   }
 }
 ---------------------
 ---------LIB---------
@@ -57,6 +64,21 @@ function Color(R, G, B, A)
         g = G or 0,
         b = B or 0,
         a = A or 255
+    }
+end
+
+function Vector(X, Y, Z)
+    return {
+        x = X or 0,
+        y = Y or 0,
+        z = Z or 0
+    }
+end
+
+function ScreenPos(X, Y)
+    return {
+        x = X or nil,
+        y = Y or nil
     }
 end
 ---------------------
@@ -81,11 +103,14 @@ local var = {
 local ui_additions = {
     nade_esp = {
         ui_enabled = api.ui.new_multiselect("VISUALS", "Other ESP", "Nade ESP", "Smoke", "Molotov"),
-        ui_settings = api.ui.new_combobox("VISUALS", "Other ESP", "Nade ESP settings", "General", "Smoke", "Molotov"),
+        ui_settings = api.ui.new_combobox("VISUALS", "Other ESP", "Nade ESP settings", "General", "Smoke", "Molotov", "Fade out"),
         settings = {
             molotov = {
-                radius_color_label = api.ui.new_label("VISUALS", "Other ESP", "Radius color"),
+                draw_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Draw spread circles"),
                 radius_color = api.ui.new_color_picker("VISUALS", "Other ESP", "radius_color", 255, 0, 0, 255),
+                fill_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Fill spread"),
+                radius_fill_color = api.ui.new_color_picker("VISUALS", "Other ESP", "fill_radius_color", 255, 0, 0, 100),
+                indicate_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Indicate time on the spread circles"),
                 background_color_label = api.ui.new_label("VISUALS", "Other ESP", "Background"),
                 background_color = api.ui.new_color_picker("VISUALS", "Other ESP", "background_color", 0, 0, 0, 200),
                 icon_color_label = api.ui.new_label("VISUALS", "Other ESP", "Icon"),
@@ -93,14 +118,25 @@ local ui_additions = {
                 indicator_color_label = api.ui.new_label("VISUALS", "Other ESP", "Indicator"),
                 indicator_color = api.ui.new_color_picker("VISUALS", "Other ESP", "indicator_color", 255, 255, 255, 255),
                 hvhmode = api.ui.new_checkbox("VISUALS", "Other ESP", "HvH-mode"),
-                hvh_safe_color_label = api.ui.new_label("VISUALS", "Other ESP", "  safe"),
+                hvh_safe_color_label = api.ui.new_label("VISUALS", "Other ESP", "Safe Molotov: Indicator"),
                 hvh_safe_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_icon_safe_color", 0, 255, 0, 255),
-                hvh_unsafe_color_label = api.ui.new_label("VISUALS", "Other ESP", "  unsafe"),
-                hvh_unsafe_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_icon_unsafe_color", 255, 0, 0, 255)
+                hvh_safe_spread_color_label = api.ui.new_label("VISUALS", "Other ESP", "Safe Molotov: Draw spread circle"),
+                hvh_safe_spread_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_safe_spread_color", 0, 255, 0, 255),
+                hvh_safe_spread_fill_color_label = api.ui.new_label("VISUALS", "Other ESP", "Safe Molotov: Fill spread"),
+                hvh_safe_spread_fill_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_safe_spread_fill_color", 0, 255, 0, 100),
+                hvh_unsafe_color_label = api.ui.new_label("VISUALS", "Other ESP", "Unsafe Molotov: Indicator"),
+                hvh_unsafe_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_icon_unsafe_color", 255, 0, 0, 255),
+                hvh_unsafe_spread_color_label = api.ui.new_label("VISUALS", "Other ESP", "Unsafe Molotov: Draw spread circle"),
+                hvh_unsafe_spread_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_unsafe_spread_color", 255, 0, 0, 255),
+                hvh_unsafe_spread_fill_color_label = api.ui.new_label("VISUALS", "Other ESP", "Unsafe Molotov: Fill spread"),
+                hvh_unsafe_spread_fill_color = api.ui.new_color_picker("VISUALS", "Other ESP", "hvh_unsafe_spread_fill_color", 255, 0, 0, 100)
             },
             smoke = {
-                radius_color_label = api.ui.new_label("VISUALS", "Other ESP", "Radius color"),
+                draw_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Draw radius outline"),
                 radius_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_radius_color", 0, 0, 255, 255),
+                fill_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Fill radius"),
+                radius_fill_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_fill_radius_color", 0, 0, 255, 100),
+                indicate_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Indicate time on the radius outline"),
                 background_color_label = api.ui.new_label("VISUALS", "Other ESP", "Background"),
                 background_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_background_color", 0, 0, 0, 200),
                 icon_color_label = api.ui.new_label("VISUALS", "Other ESP", "Icon"),
@@ -109,14 +145,80 @@ local ui_additions = {
                 indicator_color = api.ui.new_color_picker("VISUALS", "Other ESP", "smoke_indicator_color", 255, 255, 255, 255)
             },
             general = {
-                fade_out = api.ui.new_checkbox("VISUALS", "Other ESP", "Fade out"),
                 circle_radius = api.ui.new_slider("VISUALS", "Other ESP", "Indicator radius", 10, 30, 20, true, "px", 1, nil),
                 outline_thickness = api.ui.new_slider("VISUALS", "Other ESP", "Outline thickness", 1, 5, 2, true, "px", 1, nil),
                 icon_size = api.ui.new_slider("VISUALS", "Other ESP", "Icon size", 10, 50, 20, true, "px", 1, nil)
+            },
+            fade_out = {
+                smoke_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Smoke: Fade radius outline"),
+                smoke_radius_fill = api.ui.new_checkbox("VISUALS", "Other ESP", "Smoke: Fade radius fill"),
+                smoke_esp = api.ui.new_checkbox("VISUALS", "Other ESP", "Smoke: Fade icon"),
+                molotov_radius = api.ui.new_checkbox("VISUALS", "Other ESP", "Molotov: Fade spread outline"),
+                molotov_radius_fill = api.ui.new_checkbox("VISUALS", "Other ESP", "Molotov: Fade spread fill"),
+                molotov_esp = api.ui.new_checkbox("VISUALS", "Other ESP", "Molotov: Fade icon")
             }
         }
     }
 }
+--------------------
+------RENDERER------
+--------------------
+local renderer3D = {
+    circle_outline = function(pos, radius, r, g, b, a, segments, start_degrees, percentage)
+        local old_positon = nil
+
+        for rotation = start_degrees, percentage * 360, 360 / segments do
+            temp_rotation = api.math.rad(rotation)
+
+            local x = radius * api.math.cos(temp_rotation) + pos.x
+            local y = radius * api.math.sin(temp_rotation) + pos.y
+            local positon = Vector(x, y, pos.z)
+
+            if old_positon ~= nil then
+                local screen_pos = ScreenPos(api.renderer.world_to_screen(positon.x, positon.y, positon.z))
+
+                if screen_pos.x ~= nil and old_positon.x ~= nil then
+                    api.renderer.line(old_positon.x, old_positon.y, screen_pos.x, screen_pos.y, r, g, b, a)
+                end
+                old_positon = screen_pos
+            else
+                old_positon = ScreenPos(api.renderer.world_to_screen(positon.x, positon.y, positon.z))
+            end
+        end
+    end,
+    circle = function(pos, radius, r, g, b, a, segments, start_degrees, percentage)
+        local middle = ScreenPos(api.renderer.world_to_screen(pos.x, pos.y, pos.z))
+        local old_positon = nil
+        local waitfornext = false
+        local last_visible
+
+        for rotation = start_degrees, percentage * 360, 360 / segments do
+            temp_rotation = api.math.rad(rotation)
+
+            local x = radius * api.math.cos(temp_rotation) + pos.x
+            local y = radius * api.math.sin(temp_rotation) + pos.y
+            local positon = Vector(x, y, pos.z)
+
+            if old_positon ~= nil then
+                local screen_pos = ScreenPos(api.renderer.world_to_screen(positon.x, positon.y, positon.z))
+
+                if screen_pos.x ~= nil and old_positon.x ~= nil then
+                    api.renderer.triangle(middle.x, middle.y, old_positon.x, old_positon.y, screen_pos.x, screen_pos.y, r, g, b, a)
+                    last_visible = screen_pos
+                elseif middle.x ~= nil and waitfornext == true and last_visible ~= nil and screen_pos.x ~= nil then
+                    api.renderer.triangle(middle.x, middle.y, last_visible.x, last_visible.y, screen_pos.x, screen_pos.y, r, g, b, a)
+                    last_visible = screen_pos
+                else
+                    waitfornext = true
+                end
+                old_positon = screen_pos
+            else
+                old_positon = ScreenPos(api.renderer.world_to_screen(positon.x, positon.y, positon.z))
+            end
+        end
+    end
+}
+
 ---------------------
 ------FUNCTIONS------
 ---------------------
@@ -130,9 +232,17 @@ local function get_inferno_color(hvh_mode_enabled)
 
         icon_color2 = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_safe_color))
         indicator_color2 = icon_color2
+
+        spread_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_unsafe_spread_color))
+        spread_color2 = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_safe_spread_color))
+
+        spread_fill_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_unsafe_spread_fill_color))
+        spread_fill_color2 = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.hvh_safe_spread_fill_color))
     else
         icon_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.icon_color))
         indicator_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.indicator_color))
+        spread_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.radius_fill_color))
+        spread_fill_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.radius_color))
     end
 
     return {
@@ -143,6 +253,14 @@ local function get_inferno_color(hvh_mode_enabled)
         indicator_color = {
             [1] = indicator_color,
             [2] = indicator_color2
+        },
+        spread_color = {
+            [1] = spread_color,
+            [2] = spread_color2
+        },
+        spread_fill_color = {
+            [1] = spread_fill_color,
+            [2] = spread_fill_color2
         }
     }
 end
@@ -154,7 +272,14 @@ local function draw_inferno()
     local icon_size = api.ui.get(ui_additions.nade_esp.settings.general.icon_size)
     local circle_radius = api.ui.get(ui_additions.nade_esp.settings.general.circle_radius)
     local outline_thickness = api.ui.get(ui_additions.nade_esp.settings.general.outline_thickness)
-    local fade_out = api.ui.get(ui_additions.nade_esp.settings.general.fade_out)
+    local fade_out_esp = api.ui.get(ui_additions.nade_esp.settings.fade_out.molotov_esp)
+    local fade_out_radius = api.ui.get(ui_additions.nade_esp.settings.fade_out.molotov_radius)
+    local fade_out_radius_fill = api.ui.get(ui_additions.nade_esp.settings.fade_out.molotov_radius_fill)
+    local draw_radius = api.ui.get(ui_additions.nade_esp.settings.molotov.draw_radius)
+    local radius_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.radius_color))
+    local draw_filled_radius = api.ui.get(ui_additions.nade_esp.settings.molotov.fill_radius)
+    local filled_radius_color = Color(api.ui.get(ui_additions.nade_esp.settings.molotov.radius_fill_color))
+    local indicate_radius = api.ui.get(ui_additions.nade_esp.settings.molotov.indicate_radius)
 
     local molos = api.entity.get_all("CInferno")
     for i = 1, #molos do
@@ -172,22 +297,60 @@ local function draw_inferno()
 
         local posX, posY = api.renderer.world_to_screen(x, y, z)
 
-        if posX ~= nil and posY ~= nil then
-	    color = get_inferno_color(hvh_mode_enabled);
-            local is_molly_safe = (enemy == false and hvh_mode_enabled == true and owner ~= local_player and var.cvar.mp_friendlyfire == "0")
+        color = get_inferno_color(hvh_mode_enabled)
+        local is_molly_safe = (enemy == false and hvh_mode_enabled == true and owner ~= local_player and var.cvar.mp_friendlyfire == "0")
 
-            local _background_color = background_color
-            local _indicator_color = ternary(is_molly_safe, color.indicator_color[2], color.indicator_color[1])
-            local _icon_color = ternary(is_molly_safe, color.icon_color[2], color.icon_color[1])
+        local _background_color = background_color
+        local _indicator_color = ternary(is_molly_safe, color.indicator_color[2], color.indicator_color[1])
+        local _icon_color = ternary(is_molly_safe, color.icon_color[2], color.icon_color[1])
+        local _filled_radius_color = ternary(is_molly_safe, color.spread_fill_color[2], color.spread_fill_color[1])
+        local _radius_color = ternary(is_molly_safe, color.spread_color[2], color.spread_color[1])
 
-            if fade_out == true then
-                local alpha = (255 * ((percentage) * 100) / 100)
+        if fade_out_esp == true then
+            local alpha = (255 * ((percentage) * 100) / 100)
+            _background_color.a = alpha
+            _indicator_color.a = alpha
+            _icon_color.a = alpha
+        end
 
-                _background_color.a = alpha
-                _indicator_color.a = alpha
-                _icon_color.a = alpha
+        if fade_out_radius_fill == true then
+            local alpha = (filled_radius_color.a * ((percentage) * 100) / 100)
+            _filled_radius_color.a = alpha
+        end
+
+        if fade_out_radius == true then
+            local alpha = (radius_color.a * ((percentage) * 100) / 100)
+            _radius_color.a = alpha
+        end
+
+        local firecount = api.entity.get_prop(index, "m_fireCount")
+
+        for i = 0, firecount do
+            local x1 = x + api.entity.get_prop(index, "m_fireXDelta", i)
+            local y1 = y + api.entity.get_prop(index, "m_fireYDelta", i)
+            local z1 = z + api.entity.get_prop(index, "m_fireZDelta", i)
+
+            local spread_pos = Vector(x1, y1, z1)
+            if draw_filled_radius == true then
+                renderer3D.circle(spread_pos, 60, _filled_radius_color.r, _filled_radius_color.g, _filled_radius_color.b, _filled_radius_color.a, 90, 0, 1)
             end
 
+            if draw_radius == true then
+                renderer3D.circle_outline(
+                    spread_pos,
+                    60,
+                    _radius_color.r,
+                    _radius_color.g,
+                    _radius_color.b,
+                    _radius_color.a,
+                    ternary(indicate_radius, 360, 90),
+                    0,
+                    ternary(indicate_radius, percentage, 1)
+                )
+            end
+        end
+
+        if posX ~= nil and posY ~= nil then
             api.renderer.circle(posX, posY, _background_color.r, _background_color.g, _background_color.b, _background_color.a, circle_radius, 0, 1)
             api.renderer.circle_outline(
                 posX,
@@ -224,7 +387,14 @@ local function draw_smoke()
     local icon_size = api.ui.get(ui_additions.nade_esp.settings.general.icon_size)
     local circle_radius = api.ui.get(ui_additions.nade_esp.settings.general.circle_radius)
     local outline_thickness = api.ui.get(ui_additions.nade_esp.settings.general.outline_thickness)
-    local fade_out = api.ui.get(ui_additions.nade_esp.settings.general.fade_out)
+    local fade_out_esp = api.ui.get(ui_additions.nade_esp.settings.fade_out.smoke_esp)
+    local fade_out_radius = api.ui.get(ui_additions.nade_esp.settings.fade_out.smoke_radius)
+    local fade_out_radius_fill = api.ui.get(ui_additions.nade_esp.settings.fade_out.smoke_radius_fill)
+    local draw_radius = api.ui.get(ui_additions.nade_esp.settings.smoke.draw_radius)
+    local radius_color = Color(api.ui.get(ui_additions.nade_esp.settings.smoke.radius_color))
+    local draw_filled_radius = api.ui.get(ui_additions.nade_esp.settings.smoke.fill_radius)
+    local filled_radius_color = Color(api.ui.get(ui_additions.nade_esp.settings.smoke.radius_fill_color))
+    local indicate_radius = api.ui.get(ui_additions.nade_esp.settings.smoke.indicate_radius)
 
     local smokes = api.entity.get_all("CSmokeGrenadeProjectile")
     for i = 1, #smokes do
@@ -242,19 +412,48 @@ local function draw_smoke()
 
             local posX, posY = api.renderer.world_to_screen(x, y, z)
 
+            local _background_color = background_color
+            local _indicator_color = indicator_color
+            local _icon_color = icon_color
+            local _filled_radius_color = filled_radius_color
+            local _radius_color = radius_color
+
+            if fade_out_esp == true then
+                local alpha = (255 * ((percentage) * 100) / 100)
+                _background_color.a = alpha
+                _indicator_color.a = alpha
+                _icon_color.a = alpha
+            end
+
+            if fade_out_radius_fill == true then
+                local alpha = (filled_radius_color.a * ((percentage) * 100) / 100)
+                _filled_radius_color.a = alpha
+            end
+
+            if fade_out_radius == true then
+                local alpha = (radius_color.a * ((percentage) * 100) / 100)
+                _radius_color.a = alpha
+            end
+
+            if draw_radius == true then
+                renderer3D.circle_outline(
+                    Vector(x, y, z),
+                    144,
+                    _radius_color.r,
+                    _radius_color.g,
+                    _radius_color.b,
+                    _radius_color.a,
+                    ternary(indicate_radius, 360, 90),
+                    0,
+                    ternary(indicate_radius, percentage, 1)
+                )
+            end
+
+            if draw_filled_radius == true then
+                renderer3D.circle(Vector(x, y, z), 144, _filled_radius_color.r, _filled_radius_color.g, _filled_radius_color.b, _filled_radius_color.a, 90, 0, 1)
+            end
+
             if posX ~= nil and posY ~= nil then
-                local _background_color = background_color
-                local _indicator_color = indicator_color
-                local _icon_color = icon_color
-
-                if fade_out == true then
-                    local alpha = (255 * ((percentage) * 100) / 100)
-    
-                    _background_color.a = alpha
-                    _indicator_color.a = alpha
-                    _icon_color.a = alpha
-                end
-
                 api.renderer.circle(posX, posY, _background_color.r, _background_color.g, _background_color.b, _background_color.a, circle_radius, 0, 1)
                 api.renderer.circle_outline(
                     posX,
@@ -291,7 +490,7 @@ local function nade_esp_setvisible()
     api.table.foreach(
         ui_additions.nade_esp.settings,
         function(index)
-            local status = index:lower() == active_settings_tab:lower()
+            local status = index:lower() == active_settings_tab:lower():gsub(" ", "_")
 
             api.table.foreach(
                 ui_additions.nade_esp.settings[index],
